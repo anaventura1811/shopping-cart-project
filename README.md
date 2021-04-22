@@ -14,14 +14,6 @@ Nesse projeto, as seguintes habilidades são avaliadas:
 
 ---
 
-### Protótipo do projeto
-
-O objetivo do projeto é criar uma página com o comportamento parecido com o do gif abaixo:
-
-![Project Gif](./out.gif)
-
----
-
 ## Requisitos do projeto
 
 - [x]  1 - Crie uma listagem de produtos
