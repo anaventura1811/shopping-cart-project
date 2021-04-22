@@ -24,7 +24,6 @@ function createProductItemElement({ id, title, thumbnail }) {
   section.appendChild(createCustomElement('span', 'item__title', title));
   section.appendChild(createProductImageElement(thumbnail));
   section.appendChild(createCustomElement('button', 'item__add', 'Adicionar ao carrinho!'));
-
   return section;
 }
 
@@ -41,14 +40,18 @@ const iterandoMeusDados = (dados) => {
 function startLoading() {
   const loading = document.createElement('h1');
   loading.classList.add('loading');
+  const loader = document.createElement('div');
   loading.textContent = 'loading...';
-  const appendBody = document.body.appendChild(loading);
-  return appendBody;
+  loader.className = 'loader';
+  document.body.appendChild(loading);
+  loading.appendChild(loader);
 }
 
 // Remove o elemento de classe .loading da página quando a requisição na API é feita
 const stopLoading = async () => {
   const loadingItem = document.querySelector('.loading');
+  const loaderItem = document.querySelector('.loader');
+  loaderItem.remove();
   loadingItem.remove();
 };
 
@@ -151,25 +154,60 @@ function eraseAll() {
   });
 }
 
-
 // Faz a requisição dos dados - com auxílio do plantão do Eliezer Queiroz e do Jackson Pires
 const productPromise = (productName) => {
   startLoading();
-  let products;
   return new Promise((resolve) => {
     fetch(`https://api.mercadolibre.com/sites/MLB/search?q=${productName}`)
     .then((response) => {
       response.json().then((data) => { 
         stopLoading();
-        products = data.results;
-        resolve(products);
+        resolve(data.results);
     });
   });
   });  
 };
-// Criar uma função que captura o inputValue e o atribui como parâmetro de producPromise, podendo deixar 'computador' como 
-// default parameter
 
+// Faz nova requisição dos dados conforme busca digitada no campo input
+function onSearch() {
+  const input = document.querySelector('.search-input');
+  const button = document.querySelector('#search');
+  button.addEventListener('click', () => {
+    const sectionItems = document.querySelector('.items');
+    sectionItems.innerHTML = '';
+    let products;
+    startLoading();
+    return new Promise((resolve) => {
+      fetch(`https://api.mercadolibre.com/sites/MLB/search?q=${input.value}`)
+      .then((response) => {
+        response.json().then((data) => {
+         stopLoading();
+         products = data.results;
+         resolve(products);
+         products.forEach((product) => {
+          const image = `https://http2.mlstatic.com/D_NQ_NP_${product.thumbnail_id}-O.webp`;
+          const objt = { id: product.id, title: product.title, thumbnail: image };
+          createProductItemElement(objt);
+          input.value = '';
+         });
+         localStorage.setItem('items', sectionItems.innerHTML);
+         addToMyCart(products);
+        })
+       })
+     })
+  }) 
+}
+
+const fetchSoughtProducts = async () => {
+  try {
+    const resposta = await onSearch();
+    iterandoMeusDados(resposta);
+    addToMyCart(resposta);
+    precoTotal();
+  } catch (error) {
+    console.log('failure');
+  }
+}
 
 const fetchProducts = async () => {
   try {
@@ -185,6 +223,8 @@ const fetchProducts = async () => {
 
 window.onload = function onload() { 
   fetchProducts();
+  fetchSoughtProducts();
+  precoTotal();
   eraseAll();
   getMyCart();
 };
@@ -201,3 +241,5 @@ window.onload = function onload() {
 // Para ajustes nas funções saveMyCart e getMyCart, foram consultadas as seguintes referências:
 // -- Livro: IEPSEN, Edécio Fernando. Lógica de programação e algoritmos com JavaScript. Ed. Novatec 2018 (cap. 8 - Persistência de dados com local Storage)
 // -- Meu repositório do projeto To Do List: https://github.com/anaventura1811/minhas-tarefas
+
+
